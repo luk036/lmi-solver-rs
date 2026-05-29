@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 ndarray = "0.16.1"
-ellalgo-rs = { path = "../ellalgo-rs" }
+ellalgo-rs = "0.1.4"
 
 [dev-dependencies]
 approx_eq = "0.1.8"
