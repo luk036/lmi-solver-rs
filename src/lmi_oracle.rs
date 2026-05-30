@@ -1,9 +1,9 @@
 use crate::ldlt_mgr::LDLTMgr;
 use ellalgo_rs::arr::Arr;
-use ellalgo_rs::cutting_plane::OracleFeas;
+use ellalgo_rs::cutting_plane::{OracleFeas, SingleCut};
 use ndarray::Array2;
 
-pub type Cut = (Arr, f64);
+pub type Cut = (Arr, SingleCut);
 
 /// The `LMIOracle` struct represents an oracle for a Linear Matrix Inequality (LMI) constraint.
 /// It contains the necessary data to evaluate the LMI constraint, including the matrix `mat_f`,
@@ -38,7 +38,7 @@ impl LMIOracle {
 }
 
 impl OracleFeas<Arr> for LMIOracle {
-    type CutChoice = f64; // single cut
+    type CutChoice = SingleCut; // single cut
 
     /// The function assesses the feasibility of a solution by calculating the difference between
     /// elements of matrices based on input arrays.
@@ -77,7 +77,7 @@ impl OracleFeas<Arr> for LMIOracle {
                 .iter()
                 .map(|mat_fk| self.ldlt_mgr.sym_quad(mat_fk))
                 .collect();
-            Some((Arr::from(grad_vec), epsilon))
+            Some((Arr::from(grad_vec), SingleCut(epsilon)))
         }
     }
 }
@@ -85,7 +85,7 @@ impl OracleFeas<Arr> for LMIOracle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ellalgo_rs::cutting_plane::{cutting_plane_optim, Options, OracleOptim};
+    use ellalgo_rs::cutting_plane::{cutting_plane_optim, Options, OracleOptim, SingleCut};
     use ellalgo_rs::ell::Ell;
     use ndarray::ShapeError;
 
@@ -96,9 +96,9 @@ mod tests {
     }
 
     impl OracleOptim<Arr> for MyOracle {
-        type CutChoice = f64; // single cut
+        type CutChoice = SingleCut; // single cut
 
-        fn assess_optim(&mut self, xc: &Arr, gamma: &mut f64) -> ((Arr, f64), bool) {
+        fn assess_optim(&mut self, xc: &Arr, gamma: &mut f64) -> ((Arr, SingleCut), bool) {
             if let Some(cut) = self.lmi1.assess_feas(xc) {
                 return (cut, false);
             }
@@ -110,11 +110,11 @@ mod tests {
             let f0 = self.c.dot(xc);
             let func_val = f0 - *gamma;
             if func_val > 0.0 {
-                return ((self.c.clone(), func_val), false);
+                return ((self.c.clone(), SingleCut(func_val)), false);
             }
 
             *gamma = f0;
-            ((self.c.clone(), 0.0), true)
+            ((self.c.clone(), SingleCut(0.0)), true)
         }
     }
 
