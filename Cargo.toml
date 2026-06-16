@@ -7,7 +7,7 @@ repository = "https://github.com/luk036/lmi-solver-rs"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ndarray = "0.16.1"
+ndarray = "0.17.2"
 ellalgo-rs = "0.1.4"
 
 [dev-dependencies]
