@@ -1,6 +1,6 @@
 [package]
 name = "lmi-solver-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "LMI Solver in Rust"
 repository = "https://github.com/luk036/lmi-solver-rs"
@@ -9,6 +9,3 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 ndarray = "0.17.2"
 ellalgo-rs = "0.1.4"
-
-[dev-dependencies]
-approx_eq = "0.1.8"
