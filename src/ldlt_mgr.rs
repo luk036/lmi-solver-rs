@@ -93,6 +93,8 @@ impl LDLTMgr {
     /// The `factor` function performs `LDLTMgr` factorization on a matrix and checks if it is symmetric
     /// positive definite.
     ///
+    /// $$ A = LDL^T \quad \text{where } L \text{ is unit lower triangular, } D \text{ is diagonal} $$
+    ///
     /// Arguments:
     ///
     /// * `get_elem`: `get_elem` is a closure that takes two `usize` parameters (`i` and `j`) and returns a
@@ -143,6 +145,8 @@ impl LDLTMgr {
 
     /// The function `factor_with_allow_semidefinite` checks if a given matrix is symmetric positive
     /// definite (SPD) or semidefinite.
+    ///
+    /// $$ A = LDL^T \quad \text{with } D_{ii} \ge 0 \text{ allowed for semidefinite} $$
     ///
     /// Arguments:
     ///
@@ -222,6 +226,9 @@ impl LDLTMgr {
 
     /// The function calculates the witness vector of a matrix.
     ///
+    /// $$ w = A^{-1} e_k \quad \text{where } k \text{ is the index of the negative pivot} $$
+    /// $$ \epsilon = -D_{kk} $$
+    ///
     /// Returns:
     ///
     /// The function `witness` returns a `f64` (a 64-bit floating-point number).
@@ -260,6 +267,8 @@ impl LDLTMgr {
     }
 
     /// The `sym_quad` function calculates the quadratic form of a symmetric matrix and a vector.
+    ///
+    /// $$ Q = w^T A w = \sum_{i,j} w_i A_{ij} w_j $$
     ///
     /// Arguments:
     ///
@@ -302,6 +311,9 @@ impl LDLTMgr {
         res
     }
 
+    /// Compute the matrix square root $L \sqrt{D}$ from the $LDL^T$ factorization.
+    ///
+    /// $$ A^{1/2} = L \sqrt{D} \quad \text{where } A = LDL^T $$
     pub fn sqrt(&self) -> Array2<f64> {
         if !self.is_spd() {
             panic!("Matrix is not symmetric positive definite");
