@@ -6,6 +6,12 @@ use ndarray::Array2;
 pub type Cut = (Arr, SingleCut);
 
 /// The `LMIOracle` struct represents an oracle for a Linear Matrix Inequality (LMI) constraint.
+///
+/// A Linear Matrix Inequality has the form:
+/// $$ F(x) = F_0 + \sum_{i=1}^{m} x_i F_i \succ 0 $$
+///
+/// where $$ F_i $$ are symmetric matrices and $$ F(x) $$ must be positive definite.
+///
 /// It contains the necessary data to evaluate the LMI constraint, including the matrix `mat_f`,
 /// the matrix `mat_f0`, and an `LDLTMgr` instance for managing the Cholesky decomposition.
 /// This oracle can be used to check the feasibility of a given point with respect to the LMI constraint.
@@ -40,8 +46,12 @@ impl LMIOracle {
 impl OracleFeas<Arr> for LMIOracle {
     type CutChoice = SingleCut; // single cut
 
-    /// The function assesses the feasibility of a solution by calculating the difference between
-    /// elements of matrices based on input arrays.
+    /// Assesses feasibility of $$ x_c $$ with respect to the LMI constraint.
+    ///
+    /// $$ F(x_c) = F_0 + \sum_{i=1}^{m} x_i F_i \succ 0 $$
+    ///
+    /// If $$ F(x_c) $$ is not positive definite, returns a cutting plane
+    /// with gradient $$ g_i = w^T F_i w $$ and $$ \epsilon = -D_{kk} $$.
     ///
     /// Arguments:
     ///

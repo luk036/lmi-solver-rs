@@ -1,8 +1,13 @@
 use ndarray::{s, Array1, Array2};
 
-/// The `LDLTMgr` struct is a manager for `LDLTMgr` factorization in Rust.
+/// The `LDLTMgr` struct is a manager for LDL^T factorization in Rust.
 ///
-/// `LDLTMgr` is a class that performs the `LDLTMgr` factorization for a given
+/// $$ A = LDL^T $$
+///
+/// where $$ L $$ is unit lower triangular and $$ D $$ is diagonal.
+/// This is a square-root-free variant of Cholesky factorization.
+///
+/// `LDLTMgr` performs the LDL^T factorization for a given
 /// symmetric matrix. The `LDLTMgr` factorization decomposes a symmetric matrix A into
 /// the product of a lower triangular matrix L, a diagonal matrix D, and the
 /// transpose of L. This factorization is useful for solving linear systems and
@@ -64,6 +69,8 @@ impl LDLTMgr {
     }
 
     /// The `factorize` function takes a 2D array of f64 values and factors it using a closure.
+    ///
+    /// $$ A = LDL^T $$
     ///
     /// Arguments:
     ///
