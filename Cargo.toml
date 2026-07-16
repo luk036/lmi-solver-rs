@@ -8,4 +8,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 ndarray = "0.17.2"
-ellalgo-rs = "0.1.4"
+ellalgo-rs = "0.1.8"
