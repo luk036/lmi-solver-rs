@@ -1,5 +1,14 @@
 use ndarray::{s, Array1, Array2};
 
+/// Pivot handling policy for the shared factorization skeleton.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PivotPolicy {
+    /// Stop on any non-positive pivot (d <= 0); start stays at 0.
+    Strict,
+    /// Stop on a negative pivot, advance the start index on a zero pivot.
+    AllowSemidefinite,
+}
+
 /// The `LDLTMgr` struct is a manager for LDL^T factorization in Rust.
 ///
 /// $$ A = LDL^T $$
@@ -128,26 +137,7 @@ impl LDLTMgr {
     where
         F: Fn(usize, usize) -> f64,
     {
-        self.pos = (0, 0);
-        for i in 0..self.ndim {
-            let mut diag = get_elem(i, 0);
-            for j in 0..i {
-                self.storage[[j, i]] = diag;
-                self.storage[[i, j]] = diag / self.storage[[j, j]];
-                let stop = j + 1;
-                diag = get_elem(i, stop)
-                    - self
-                        .storage
-                        .slice(s![i, 0..stop])
-                        .dot(&self.storage.slice(s![0..stop, stop]));
-            }
-            self.storage[[i, i]] = diag;
-            if diag <= 0.0 {
-                self.pos = (0, i + 1);
-                break;
-            }
-        }
-        self.is_spd()
+        self.factor_impl(get_elem, PivotPolicy::Strict)
     }
 
     /// The function `factor_with_allow_semidefinite` checks if a given matrix is symmetric positive
@@ -181,6 +171,21 @@ impl LDLTMgr {
     where
         F: Fn(usize, usize) -> f64,
     {
+        self.factor_impl(get_elem, PivotPolicy::AllowSemidefinite)
+    }
+
+    /// Shared LDL^T factorization skeleton.
+    ///
+    /// Row-wise sweep identical for both public entry points; the pivot policy
+    /// selects how non-positive / zero pivots are handled. With
+    /// `PivotPolicy::Strict` the start index stays at 0 and any `d <= 0`
+    /// stops the sweep (matching `factor`); with `PivotPolicy::AllowSemidefinite`
+    /// a zero pivot advances the start index and only `d < 0` stops the sweep
+    /// (matching `factor_with_allow_semidefinite`).
+    fn factor_impl<F>(&mut self, get_elem: F, policy: PivotPolicy) -> bool
+    where
+        F: Fn(usize, usize) -> f64,
+    {
         self.pos = (0, 0);
         let mut start = 0;
         for i in 0..self.ndim {
@@ -201,6 +206,10 @@ impl LDLTMgr {
                 break;
             }
             if diag == 0.0 {
+                if policy == PivotPolicy::Strict {
+                    self.pos = (start, i + 1);
+                    break;
+                }
                 start = i + 1;
             }
         }
