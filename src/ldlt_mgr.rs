@@ -102,6 +102,7 @@ impl LDLTMgr {
     /// ];
     /// assert_eq!(ldlt_mgr.factorize(&mat_a), false);
     /// ```
+    #[inline]
     pub fn factorize(&mut self, mat_a: &Array2<f64>) -> bool {
         self.factor(|i, j| mat_a[[i, j]])
     }
@@ -133,6 +134,7 @@ impl LDLTMgr {
     /// ];
     /// assert_eq!(ldlt_mgr.factor(&|i, j| mat_a[[i, j]]), false);
     /// ```
+    #[inline]
     pub fn factor<F>(&mut self, get_elem: F) -> bool
     where
         F: Fn(usize, usize) -> f64,
@@ -167,6 +169,7 @@ impl LDLTMgr {
     /// ];
     /// assert_eq!(ldlt_mgr.factor_with_allow_semidefinite(&|i, j| mat_a[[i, j]]), true);
     /// ```
+    #[inline]
     pub fn factor_with_allow_semidefinite<F>(&mut self, get_elem: F) -> bool
     where
         F: Fn(usize, usize) -> f64,
@@ -236,6 +239,7 @@ impl LDLTMgr {
     /// assert_eq!(ldlt_mgr.factor(&|i, j| mat_a[[i, j]]), false);
     /// assert_eq!(ldlt_mgr.is_spd(), false);
     /// ```
+    #[inline]
     pub fn is_spd(&self) -> bool {
         self.pos.1 == 0
     }
