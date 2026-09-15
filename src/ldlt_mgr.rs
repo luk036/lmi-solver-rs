@@ -1,4 +1,4 @@
-use ndarray::{s, Array1, Array2};
+use ndarray::{Array1, Array2};
 
 /// Pivot handling policy for the shared factorization skeleton.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -197,11 +197,15 @@ impl LDLTMgr {
                 self.storage[[j, i]] = diag;
                 self.storage[[i, j]] = diag / self.storage[[j, j]];
                 let stop = j + 1;
-                diag = get_elem(i, stop)
-                    - self
-                        .storage
-                        .slice(s![i, start..stop])
-                        .dot(&self.storage.slice(s![start..stop, stop]));
+                let n = self.ndim;
+                let mut s = 0.0;
+                {
+                    let data = self.storage.as_slice().unwrap();
+                    for k in start..stop {
+                        s += data[i * n + k] * data[k * n + stop];
+                    }
+                }
+                diag = get_elem(i, stop) - s;
             }
             self.storage[[i, i]] = diag;
             if diag < 0.0 {
@@ -276,14 +280,18 @@ impl LDLTMgr {
         }
         let (start, ndim) = self.pos;
         let last_idx = ndim - 1;
-        self.wit[last_idx] = 1.0;
+        let n = self.ndim;
+        let st = self.storage.as_slice().unwrap();
+        let w = self.wit.as_slice_mut().unwrap();
+        w[last_idx] = 1.0;
         for i in (start..last_idx).rev() {
-            self.wit[i] = 0.0;
-            for k in i..ndim {
-                self.wit[i] -= self.storage[[k, i]] * self.wit[k];
+            let mut s = 0.0;
+            for k in (i + 1)..ndim {
+                s += st[k * n + i] * w[k];
             }
+            w[i] = -s;
         }
-        -self.storage[[last_idx, last_idx]]
+        -st[last_idx * n + last_idx]
     }
 
     /// The `sym_quad` function calculates the quadratic form of a symmetric matrix and a vector.
@@ -321,12 +329,15 @@ impl LDLTMgr {
     pub fn sym_quad(&self, mat_a: &Array2<f64>) -> f64 {
         let mut res = 0.0;
         let (start, stop) = self.pos;
+        let m = mat_a.as_slice().unwrap();
+        let w = self.wit.as_slice().unwrap();
+        let stride = mat_a.ncols();
         for i in start..stop {
             let mut sum_val = 0.0;
             for j in (i + 1)..stop {
-                sum_val += mat_a[[i, j]] * self.wit[j];
+                sum_val += m[i * stride + j] * w[j];
             }
-            res += self.wit[i] * (mat_a[[i, i]] * self.wit[i] + 2.0 * sum_val);
+            res += w[i] * (m[i * stride + i] * w[i] + 2.0 * sum_val);
         }
         res
     }
