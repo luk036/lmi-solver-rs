@@ -185,29 +185,32 @@ impl LDLTMgr {
     /// stops the sweep (matching `factor`); with `PivotPolicy::AllowSemidefinite`
     /// a zero pivot advances the start index and only `d < 0` stops the sweep
     /// (matching `factor_with_allow_semidefinite`).
+    #[inline]
     fn factor_impl<F>(&mut self, get_elem: F, policy: PivotPolicy) -> bool
     where
         F: Fn(usize, usize) -> f64,
     {
         self.pos = (0, 0);
+        let n = self.ndim;
         let mut start = 0;
-        for i in 0..self.ndim {
+        // Hold one mutable slice for the whole sweep. `storage` is a flat
+        // row-major buffer, so indexing it directly avoids re-checking
+        // contiguity (`as_slice().unwrap()`) and bounds on every element —
+        // that check used to run once per `j`, i.e. O(n^2) times.
+        let data = self.storage.as_slice_mut().unwrap();
+        for i in 0..n {
             let mut diag = get_elem(i, start);
             for j in start..i {
-                self.storage[[j, i]] = diag;
-                self.storage[[i, j]] = diag / self.storage[[j, j]];
+                data[j * n + i] = diag;
+                data[i * n + j] = diag / data[j * n + j];
                 let stop = j + 1;
-                let n = self.ndim;
                 let mut s = 0.0;
-                {
-                    let data = self.storage.as_slice().unwrap();
-                    for k in start..stop {
-                        s += data[i * n + k] * data[k * n + stop];
-                    }
+                for k in start..stop {
+                    s += data[i * n + k] * data[k * n + stop];
                 }
                 diag = get_elem(i, stop) - s;
             }
-            self.storage[[i, i]] = diag;
+            data[i * n + i] = diag;
             if diag < 0.0 {
                 self.pos = (start, i + 1);
                 break;
